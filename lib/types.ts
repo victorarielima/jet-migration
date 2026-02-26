@@ -36,6 +36,23 @@ export interface MigrationResult {
   error?: string
 }
 
+export interface PartnerApp {
+  id: string
+  name: string
+  phone?: string
+  customerId?: string
+  live?: boolean
+  partnerId?: number
+  createdOn?: number
+  modifiedOn?: number
+  partnerCreated?: boolean
+  cxpEnabled?: boolean
+  partnerUsage?: boolean
+  stopped?: boolean
+  healthy?: boolean
+  cap?: number
+}
+
 export type MigrationStatus = "idle" | "running" | "completed"
 
 export type Step = 1 | 2 | 3

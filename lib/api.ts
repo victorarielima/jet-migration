@@ -1,10 +1,39 @@
-import type { GupshupTemplate } from "./types"
+import type { GupshupTemplate, PartnerApp } from "./types"
 
 const PROXY_BASE = "/api/proxy"
 
 // Cache de tokens de app para evitar requisições repetidas e erro 429
 const appTokenCache = new Map<string, { token: string; timestamp: number }>()
 const TOKEN_CACHE_DURATION = 5 * 60 * 1000 // 5 minutos
+
+// Cache de apps do parceiro
+const partnerAppsCache: { apps: PartnerApp[]; timestamp: number } | null = null
+const APPS_CACHE_DURATION = 2 * 60 * 1000 // 2 minutos
+
+export async function fetchPartnerApps(authToken: string): Promise<PartnerApp[]> {
+  console.log("🏢 Fetching partner apps...")
+  
+  const res = await fetch(`${PROXY_BASE}/account/api/partnerApps`, {
+    headers: { Authorization: authToken },
+  })
+
+  if (!res.ok) {
+    throw new Error("Erro ao buscar apps. Verifique suas credenciais.")
+  }
+
+  const data = await res.json()
+  
+  // A resposta tem a estrutura: { partnerAppsList: [...] }
+  if (data.partnerAppsList && Array.isArray(data.partnerAppsList)) {
+    return data.partnerAppsList as PartnerApp[]
+  }
+
+  if (Array.isArray(data)) {
+    return data as PartnerApp[]
+  }
+
+  return []
+}
 
 export async function login(email: string, password: string): Promise<{ token: string }> {
   const body = new URLSearchParams({ email, password })

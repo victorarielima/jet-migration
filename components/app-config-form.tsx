@@ -1,14 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useMigration } from "@/context/migration-context"
-import { fetchTemplates } from "@/lib/api"
+import { fetchTemplates, fetchPartnerApps } from "@/lib/api"
+import type { PartnerApp } from "@/lib/types"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Loader2, ArrowRight, Upload, Download, ArrowDown, Sparkles, Server } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import { Loader2, ArrowRight, Upload, Download, ArrowDown, Sparkles, Server, Check, ChevronsUpDown, Phone, Hash } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 export function AppConfigForm() {
   const {
@@ -20,12 +29,47 @@ export function AppConfigForm() {
     setTemplates,
     setCurrentStep,
   } = useMigration()
+  
   const [loading, setLoading] = useState(false)
+  const [loadingApps, setLoadingApps] = useState(false)
+  const [apps, setApps] = useState<PartnerApp[]>([])
+  const [sourceOpen, setSourceOpen] = useState(false)
+  const [destOpen, setDestOpen] = useState(false)
+
+  // Buscar apps ao carregar
+  useEffect(() => {
+    async function loadApps() {
+      if (!token) return
+      
+      setLoadingApps(true)
+      try {
+        const partnerApps = await fetchPartnerApps(token)
+        setApps(partnerApps)
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Erro ao carregar apps."
+        )
+      } finally {
+        setLoadingApps(false)
+      }
+    }
+    
+    loadApps()
+  }, [token])
+
+  const selectedSourceApp = apps.find(app => app.id === sourceAppId)
+  const selectedDestApp = apps.find(app => app.id === destinationAppId)
 
   async function handleFetch(e: React.FormEvent) {
     e.preventDefault()
     if (!sourceAppId.trim() || !destinationAppId.trim()) {
-      toast.error("Preencha ambos os App IDs.")
+      toast.error("Selecione ambos os Apps.")
+      return
+    }
+    if (sourceAppId === destinationAppId) {
+      toast.error("App de origem e destino devem ser diferentes.")
       return
     }
     if (!token) {
@@ -52,6 +96,120 @@ export function AppConfigForm() {
     } finally {
       setLoading(false)
     }
+  }
+
+  function AppCombobox({
+    value,
+    onSelect,
+    open,
+    setOpen,
+    placeholder,
+    excludeId,
+  }: {
+    value: string
+    onSelect: (value: string) => void
+    open: boolean
+    setOpen: (open: boolean) => void
+    placeholder: string
+    excludeId?: string
+  }) {
+    const selectedApp = apps.find(app => app.id === value)
+    const filteredApps = excludeId ? apps.filter(app => app.id !== excludeId) : apps
+
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="h-14 w-full justify-between border-border/50 bg-background/50 px-4 text-left transition-all hover:border-primary/50 hover:bg-background/70"
+          >
+            {loadingApps ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Carregando apps...
+              </div>
+            ) : selectedApp ? (
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium text-foreground">{selectedApp.name}</span>
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {selectedApp.phone && (
+                    <>
+                      <Phone className="h-3 w-3" />
+                      {selectedApp.phone}
+                    </>
+                  )}
+                  <Hash className="h-3 w-3" />
+                  {selectedApp.id.substring(0, 8)}...
+                </span>
+              </div>
+            ) : (
+              <span className="text-muted-foreground">{placeholder}</span>
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Buscar por nome ou telefone..." />
+            <CommandList>
+              <CommandEmpty>Nenhum app encontrado.</CommandEmpty>
+              <CommandGroup>
+                {filteredApps.map((app) => (
+                  <CommandItem
+                    key={app.id}
+                    value={`${app.name} ${app.phone || ""} ${app.id}`}
+                    onSelect={() => {
+                      onSelect(app.id)
+                      setOpen(false)
+                    }}
+                    className="flex cursor-pointer items-center gap-3 py-3"
+                  >
+                    <div className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold",
+                      app.live 
+                        ? "bg-primary/20 text-primary" 
+                        : "bg-muted text-muted-foreground"
+                    )}>
+                      {app.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex flex-1 flex-col gap-0.5">
+                      <span className="font-medium">{app.name}</span>
+                      <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {app.phone && (
+                          <>
+                            <Phone className="h-3 w-3" />
+                            {app.phone}
+                          </>
+                        )}
+                        {!app.phone && (
+                          <>
+                            <Hash className="h-3 w-3" />
+                            {app.id.substring(0, 12)}...
+                          </>
+                        )}
+                        {app.live && (
+                          <span className="rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                            LIVE
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <Check
+                      className={cn(
+                        "h-4 w-4 text-primary",
+                        value === app.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    )
   }
 
   return (
@@ -86,16 +244,16 @@ export function AppConfigForm() {
                 Origem
               </div>
               <div className="flex flex-col gap-2 pt-1">
-                <Label htmlFor="source" className="text-sm font-medium text-foreground">
-                  App ID de Origem
-                </Label>
-                <Input
-                  id="source"
-                  type="text"
-                  placeholder="Ex: 12345abcde"
+                <label className="text-sm font-medium text-foreground">
+                  Selecione o App de Origem
+                </label>
+                <AppCombobox
                   value={sourceAppId}
-                  onChange={(e) => setSourceAppId(e.target.value)}
-                  className="h-11 border-border/50 bg-background/50 transition-all focus:border-primary/50"
+                  onSelect={setSourceAppId}
+                  open={sourceOpen}
+                  setOpen={setSourceOpen}
+                  placeholder="Buscar app de origem..."
+                  excludeId={destinationAppId}
                 />
               </div>
             </div>
@@ -117,23 +275,23 @@ export function AppConfigForm() {
                 Destino
               </div>
               <div className="flex flex-col gap-2 pt-1">
-                <Label htmlFor="dest" className="text-sm font-medium text-foreground">
-                  App ID de Destino
-                </Label>
-                <Input
-                  id="dest"
-                  type="text"
-                  placeholder="Ex: 67890fghij"
+                <label className="text-sm font-medium text-foreground">
+                  Selecione o App de Destino
+                </label>
+                <AppCombobox
                   value={destinationAppId}
-                  onChange={(e) => setDestinationAppId(e.target.value)}
-                  className="h-11 border-border/50 bg-background/50 transition-all focus:border-primary/50"
+                  onSelect={setDestinationAppId}
+                  open={destOpen}
+                  setOpen={setDestOpen}
+                  placeholder="Buscar app de destino..."
+                  excludeId={sourceAppId}
                 />
               </div>
             </div>
 
             <Button 
               type="submit" 
-              disabled={loading} 
+              disabled={loading || loadingApps || !sourceAppId || !destinationAppId} 
               className="btn-tech mt-2 h-12 w-full gap-2 border-0 text-primary-foreground"
             >
               {loading ? (
