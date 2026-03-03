@@ -91,7 +91,7 @@ export function LoginForm() {
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-11 border-border/50 bg-secondary/50 pl-4 transition-all focus:border-primary/50 focus:bg-secondary"
+                    className="h-11 border-border/50 bg-secondary pl-4 focus:border-primary/50"
                     autoComplete="email"
                   />
                 </div>
@@ -108,7 +108,7 @@ export function LoginForm() {
                     placeholder="Seu client secret"
                     value={secret}
                     onChange={(e) => setSecret(e.target.value)}
-                    className="h-11 border-border/50 bg-secondary/50 pl-4 transition-all focus:border-primary/50 focus:bg-secondary"
+                    className="h-11 border-border/50 bg-secondary pl-4 focus:border-primary/50"
                     autoComplete="current-password"
                   />
                 </div>
