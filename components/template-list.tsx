@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Search, ArrowLeft, Import, FileStack, Filter, CheckSquare, Clock } from "lucide-react"
+import { Search, ArrowLeft, Import, FileStack, Filter, CheckSquare, Clock, Shuffle } from "lucide-react"
 
 interface TemplateListProps {
   onImport: (all: boolean) => void
@@ -40,12 +40,20 @@ export function TemplateList({ onImport }: TemplateListProps) {
     token,
     requestDelay,
     setRequestDelay,
+    randomizeDelay,
+    setRandomizeDelay,
+    minDelay,
+    setMinDelay,
+    maxDelay,
+    setMaxDelay,
   } = useMigration()
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("ALL")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [delayInput, setDelayInput] = useState(requestDelay.toString())
+  const [minDelayInput, setMinDelayInput] = useState(minDelay.toString())
+  const [maxDelayInput, setMaxDelayInput] = useState(maxDelay.toString())
 
   const filtered = useMemo(() => {
     return templates.filter((t) => {
@@ -193,6 +201,8 @@ export function TemplateList({ onImport }: TemplateListProps) {
               size="lg" 
               onClick={() => {
                 setDelayInput(requestDelay.toString())
+                setMinDelayInput(minDelay.toString())
+                setMaxDelayInput(maxDelay.toString())
                 setIsDialogOpen(true)
               }}
               className="btn-tech gap-2 border-0 px-8"
@@ -226,30 +236,105 @@ export function TemplateList({ onImport }: TemplateListProps) {
               <span className="text-muted-foreground">templates selecionados</span>
             </div>
             
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Tempo entre requisições</label>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <Input
-                  type="number"
-                  min={10}
-                  value={delayInput}
-                  onChange={(e) => setDelayInput(e.target.value)}
-                  onBlur={() => {
-                    const value = parseInt(delayInput, 10)
-                    if (!isNaN(value) && value >= 10) {
-                      setRequestDelay(value)
-                    } else {
-                      setDelayInput(requestDelay.toString())
-                    }
-                  }}
-                  className="h-10 w-24 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            <div className="space-y-4">
+              {/* Checkbox de aleatorizar */}
+              <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-secondary/30 p-3">
+                <Checkbox
+                  id="randomize-delay"
+                  checked={randomizeDelay}
+                  onCheckedChange={(checked) => setRandomizeDelay(checked === true)}
+                  className="border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                 />
-                <span className="text-sm text-muted-foreground">segundos</span>
+                <div className="flex items-center gap-2">
+                  <Shuffle className="h-4 w-4 text-muted-foreground" />
+                  <label htmlFor="randomize-delay" className="cursor-pointer text-sm font-medium text-foreground">
+                    Aleatorizar tempo entre requisições
+                  </label>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">O tempo mínimo é de 10 segundos para evitar bloqueios na API.</p>
+
+              {randomizeDelay ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Define um intervalo aleatório entre cada requisição para maior segurança.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Tempo mínimo</label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={10}
+                          value={minDelayInput}
+                          onChange={(e) => setMinDelayInput(e.target.value)}
+                          onBlur={() => {
+                            const value = parseInt(minDelayInput, 10)
+                            if (!isNaN(value) && value >= 10) {
+                              setMinDelay(value)
+                              if (value > maxDelay) {
+                                setMaxDelay(value)
+                                setMaxDelayInput(value.toString())
+                              }
+                            } else {
+                              setMinDelayInput(minDelay.toString())
+                            }
+                          }}
+                          className="h-10 w-full text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        />
+                        <span className="text-sm text-muted-foreground">seg</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Tempo máximo</label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={10}
+                          value={maxDelayInput}
+                          onChange={(e) => setMaxDelayInput(e.target.value)}
+                          onBlur={() => {
+                            const value = parseInt(maxDelayInput, 10)
+                            if (!isNaN(value) && value >= minDelay) {
+                              setMaxDelay(value)
+                            } else {
+                              setMaxDelayInput(maxDelay.toString())
+                            }
+                          }}
+                          className="h-10 w-full text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        />
+                        <span className="text-sm text-muted-foreground">seg</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">O tempo mínimo é de 10 segundos para evitar bloqueios na API.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Tempo entre requisições</label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                      <Clock className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <Input
+                      type="number"
+                      min={10}
+                      value={delayInput}
+                      onChange={(e) => setDelayInput(e.target.value)}
+                      onBlur={() => {
+                        const value = parseInt(delayInput, 10)
+                        if (!isNaN(value) && value >= 10) {
+                          setRequestDelay(value)
+                        } else {
+                          setDelayInput(requestDelay.toString())
+                        }
+                      }}
+                      className="h-10 w-24 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                    <span className="text-sm text-muted-foreground">segundos</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">O tempo mínimo é de 10 segundos para evitar bloqueios na API.</p>
+                </div>
+              )}
             </div>
           </div>
           
@@ -259,12 +344,29 @@ export function TemplateList({ onImport }: TemplateListProps) {
             </Button>
             <Button 
               onClick={() => {
-                const value = parseInt(delayInput, 10)
-                if (!isNaN(value) && value >= 10) {
-                  setRequestDelay(value)
+                if (randomizeDelay) {
+                  const minVal = parseInt(minDelayInput, 10)
+                  const maxVal = parseInt(maxDelayInput, 10)
+                  if (!isNaN(minVal) && minVal >= 10) {
+                    setMinDelay(minVal)
+                  } else {
+                    setMinDelay(10)
+                    setMinDelayInput("10")
+                  }
+                  if (!isNaN(maxVal) && maxVal >= minDelay) {
+                    setMaxDelay(maxVal)
+                  } else {
+                    setMaxDelay(60)
+                    setMaxDelayInput("60")
+                  }
                 } else {
-                  setRequestDelay(10)
-                  setDelayInput("10")
+                  const value = parseInt(delayInput, 10)
+                  if (!isNaN(value) && value >= 10) {
+                    setRequestDelay(value)
+                  } else {
+                    setRequestDelay(10)
+                    setDelayInput("10")
+                  }
                 }
                 setIsDialogOpen(false)
                 onImport(false)

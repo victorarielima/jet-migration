@@ -27,6 +27,9 @@ export default function DashboardPage() {
     migrationResults,
     processingIndex,
     requestDelay,
+    randomizeDelay,
+    minDelay,
+    maxDelay,
     setCurrentStep,
     setMigrationStatus,
     addMigrationResult,
@@ -128,7 +131,14 @@ export default function DashboardPage() {
       
       // Delay configurável entre requisições (exceto após o último template)
       if (i < templatesToMigrate.length - 1) {
-        await delay(requestDelay * 1000)
+        let delayTime: number
+        if (randomizeDelay) {
+          // Gera um delay aleatório entre minDelay e maxDelay
+          delayTime = Math.floor(Math.random() * (maxDelay - minDelay + 1) + minDelay) * 1000
+        } else {
+          delayTime = requestDelay * 1000
+        }
+        await delay(delayTime)
       }
     }
 

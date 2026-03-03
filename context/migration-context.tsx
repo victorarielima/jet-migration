@@ -15,6 +15,9 @@ interface MigrationContextType {
   currentStep: Step
   processingIndex: number
   requestDelay: number
+  randomizeDelay: boolean
+  minDelay: number
+  maxDelay: number
 
   setAuth: (token: string, email: string) => void
   logout: () => void
@@ -29,6 +32,9 @@ interface MigrationContextType {
   addMigrationResult: (result: MigrationResult) => void
   setProcessingIndex: (index: number) => void
   setRequestDelay: (delay: number) => void
+  setRandomizeDelay: (value: boolean) => void
+  setMinDelay: (value: number) => void
+  setMaxDelay: (value: number) => void
   resetMigration: () => void
 }
 
@@ -46,6 +52,9 @@ export function MigrationProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [processingIndex, setProcessingIndex] = useState(-1)
   const [requestDelay, setRequestDelay] = useState(10)
+  const [randomizeDelay, setRandomizeDelay] = useState(false)
+  const [minDelay, setMinDelay] = useState(10)
+  const [maxDelay, setMaxDelay] = useState(60)
 
   const setAuth = useCallback((t: string, e: string) => {
     setToken(t)
@@ -96,6 +105,9 @@ export function MigrationProvider({ children }: { children: ReactNode }) {
     setSelectedTemplateIds(new Set())
     setCurrentStep(1)
     setRequestDelay(10)
+    setRandomizeDelay(false)
+    setMinDelay(10)
+    setMaxDelay(60)
   }, [])
 
   return (
@@ -112,6 +124,9 @@ export function MigrationProvider({ children }: { children: ReactNode }) {
         currentStep,
         processingIndex,
         requestDelay,
+        randomizeDelay,
+        minDelay,
+        maxDelay,
         setAuth,
         logout,
         setSourceAppId,
@@ -125,6 +140,9 @@ export function MigrationProvider({ children }: { children: ReactNode }) {
         addMigrationResult,
         setProcessingIndex,
         setRequestDelay,
+        setRandomizeDelay,
+        setMinDelay,
+        setMaxDelay,
         resetMigration,
       }}
     >
