@@ -81,7 +81,7 @@ export function TemplateList({ onImport }: TemplateListProps) {
   return (
     <div className="flex h-full flex-col">
       {/* Header section */}
-      <div className="border-b border-border/50 bg-card/30 px-4 py-4 backdrop-blur-sm md:px-6">
+      <div className="border-b border-border/50 bg-card px-4 py-4 md:px-6">
         <div className="mx-auto max-w-7xl">
           {/* Title and back button */}
           <div className="mb-4 flex items-center justify-between">
@@ -195,7 +195,7 @@ export function TemplateList({ onImport }: TemplateListProps) {
 
       {/* Bottom action bar */}
       {selectedTemplateIds.size > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/50 bg-card/95 backdrop-blur-xl">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/50 bg-card">
           <div className="mx-auto flex max-w-4xl items-center justify-center px-4 py-4 md:px-6">
             <Button 
               size="lg" 

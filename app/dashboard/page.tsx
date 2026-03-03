@@ -174,19 +174,17 @@ export default function DashboardPage() {
       <div className="fixed inset-0 bg-background" />
       
       {/* Background gradient base */}
-      <div className="fixed inset-0 bg-gradient-to-br from-emerald-950/30 via-transparent to-emerald-950/20" />
+      <div className="fixed inset-0 bg-gradient-to-br from-emerald-950/30 via-transparent to-emerald-950/20 pointer-events-none" />
       
       {/* Grid pattern */}
-      <div className="fixed inset-0 bg-grid-pattern opacity-25" />
+      <div className="fixed inset-0 bg-grid-pattern opacity-25 pointer-events-none" />
       
-      {/* Green ambient lighting - full page coverage */}
-      <div className="fixed -top-40 left-1/2 h-[900px] w-[900px] -translate-x-1/2 rounded-full bg-gradient-radial from-emerald-500/30 via-emerald-600/15 to-transparent blur-[120px]" />
-      <div className="fixed top-1/4 -right-40 h-[700px] w-[700px] rounded-full bg-gradient-radial from-emerald-500/25 via-teal-600/10 to-transparent blur-[100px]" />
-      <div className="fixed top-1/2 -left-40 h-[600px] w-[600px] rounded-full bg-gradient-radial from-emerald-600/25 via-emerald-700/10 to-transparent blur-[90px]" />
-      <div className="fixed bottom-0 left-1/3 h-[700px] w-[700px] translate-y-1/3 rounded-full bg-gradient-radial from-emerald-500/20 via-emerald-700/10 to-transparent blur-[100px]" />
+      {/* Green ambient lighting - simplified for performance */}
+      <div className="fixed -top-40 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-emerald-500/10 pointer-events-none" />
+      <div className="fixed top-1/4 -right-40 h-[400px] w-[400px] rounded-full bg-emerald-500/8 pointer-events-none" />
       
       {/* Vignette effect */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)] pointer-events-none" />
       
       {/* Content layer */}
       <div className="relative z-10 flex min-h-screen flex-col">

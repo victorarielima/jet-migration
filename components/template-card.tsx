@@ -407,7 +407,7 @@ function buildMediaProxyUrl(
 
 // Format date like WhatsApp
 function formatDate(timestamp?: number): string {
-  if (!timestamp) return new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
+  if (!timestamp) return "-"
   const date = new Date(timestamp)
   return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
@@ -474,7 +474,7 @@ export function TemplateCard({ template, selected, onToggle, sourceAppId, token 
     <div
       onClick={onToggle}
       className={cn(
-        "relative cursor-pointer rounded-xl overflow-hidden transition-all duration-300 group",
+        "relative cursor-pointer rounded-xl overflow-hidden group",
         selected
           ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/10"
           : "hover:ring-1 hover:ring-primary/40 hover:ring-offset-1 hover:ring-offset-background hover:shadow-md hover:shadow-primary/5"
