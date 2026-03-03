@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useMigration } from "@/context/migration-context"
 import { Header } from "@/components/header"
@@ -26,6 +26,7 @@ export default function DashboardPage() {
     migrationStatus,
     migrationResults,
     processingIndex,
+    requestDelay,
     setCurrentStep,
     setMigrationStatus,
     addMigrationResult,
@@ -33,12 +34,53 @@ export default function DashboardPage() {
     resetMigration,
   } = useMigration()
 
+  const isPopStateRef = useRef(false)
+
   // Verifica autenticação
   useEffect(() => {
     if (!token) {
       router.push("/")
     }
   }, [token, router])
+
+  // Sincroniza as etapas com o histórico do navegador
+  useEffect(() => {
+    // Ao mudar de step, adiciona entrada no histórico (exceto se for popstate)
+    if (!isPopStateRef.current && currentStep > 1) {
+      window.history.pushState({ step: currentStep }, "", `/dashboard?step=${currentStep}`)
+    }
+    isPopStateRef.current = false
+  }, [currentStep])
+
+  // Escuta o evento de voltar do navegador
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (migrationStatus === "running") {
+        // Se estiver migrando, não permite voltar
+        window.history.pushState({ step: currentStep }, "", `/dashboard?step=${currentStep}`)
+        return
+      }
+      
+      isPopStateRef.current = true
+      
+      if (event.state?.step) {
+        setCurrentStep(event.state.step)
+      } else if (currentStep > 1) {
+        setCurrentStep((currentStep - 1) as 1 | 2 | 3)
+      }
+    }
+
+    window.addEventListener("popstate", handlePopState)
+    
+    // Inicializa o estado do histórico
+    if (typeof window !== "undefined" && !window.history.state?.step) {
+      window.history.replaceState({ step: currentStep }, "", `/dashboard?step=${currentStep}`)
+    }
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState)
+    }
+  }, [currentStep, setCurrentStep, migrationStatus])
 
   // Função para iniciar a migração
   async function startMigration(importAll: boolean) {
@@ -71,8 +113,6 @@ export default function DashboardPage() {
           templateName: template.elementName,
           success: true,
         })
-        // Delay fixo de 10 segundos entre requisições
-        await delay(10000)
       } catch (error) {
         const errorMessage =
           error instanceof Error
@@ -84,8 +124,11 @@ export default function DashboardPage() {
           success: false,
           error: errorMessage,
         })
-        // Delay fixo de 10 segundos mesmo em caso de erro
-        await delay(10000)
+      }
+      
+      // Delay configurável entre requisições (exceto após o último template)
+      if (i < templatesToMigrate.length - 1) {
+        await delay(requestDelay * 1000)
       }
     }
 
@@ -264,14 +307,16 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           ))}
-                          {migrationStatus === "running" && (
+                          {migrationStatus === "running" && processingIndex >= 0 && processingIndex < templates.filter((t) => selectedTemplateIds.has(t.id)).length && (
                             <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
                               <div className="relative flex h-6 w-6 items-center justify-center">
                                 <div className="absolute inset-0 animate-ping rounded-full bg-primary/30" />
                                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
                               </div>
                               <p className="text-sm font-medium text-primary">
-                                Processando próximo template...
+                                {migrationResults.length < processingIndex + 1
+                                  ? "Processando template..."
+                                  : "Aguardando próximo template..."}
                               </p>
                             </div>
                           )}

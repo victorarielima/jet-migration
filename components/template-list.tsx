@@ -14,7 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, ArrowLeft, Zap, Import, FileStack, Filter, CheckSquare } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Search, ArrowLeft, Import, FileStack, Filter, CheckSquare, Clock } from "lucide-react"
 
 interface TemplateListProps {
   onImport: (all: boolean) => void
@@ -30,10 +38,14 @@ export function TemplateList({ onImport }: TemplateListProps) {
     setCurrentStep,
     sourceAppId,
     token,
+    requestDelay,
+    setRequestDelay,
   } = useMigration()
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("ALL")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [delayInput, setDelayInput] = useState(requestDelay.toString())
 
   const filtered = useMemo(() => {
     return templates.filter((t) => {
@@ -176,40 +188,95 @@ export function TemplateList({ onImport }: TemplateListProps) {
       {/* Bottom action bar */}
       {selectedTemplateIds.size > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/50 bg-card/95 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 md:px-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <CheckSquare className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <span className="text-sm font-semibold text-foreground">
-                  {selectedTemplateIds.size} templates
-                </span>
-                <span className="ml-1 text-sm text-muted-foreground">selecionados</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onImport(true)}
-                className="gap-1.5 border-amber-500/30 text-amber-500 hover:border-amber-500/50 hover:bg-amber-500/10 hover:text-amber-400"
-              >
-                <Zap className="h-4 w-4" />
-                <span className="hidden sm:inline">Importar Todos</span>
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={() => onImport(false)}
-                className="btn-tech gap-1.5 border-0"
-              >
-                <Import className="h-4 w-4" />
-                Importar Selecionados
-              </Button>
-            </div>
+          <div className="mx-auto flex max-w-4xl items-center justify-center px-4 py-4 md:px-6">
+            <Button 
+              size="lg" 
+              onClick={() => {
+                setDelayInput(requestDelay.toString())
+                setIsDialogOpen(true)
+              }}
+              className="btn-tech gap-2 border-0 px-8"
+            >
+              <Import className="h-5 w-5" />
+              Importar Templates
+            </Button>
           </div>
         </div>
       )}
+
+      {/* Dialog de confirmação */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Import className="h-5 w-5 text-primary" />
+              Importar Templates
+            </DialogTitle>
+            <DialogDescription>
+              Configure o intervalo entre as requisições e confirme a importação.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+              <CheckSquare className="h-5 w-5 text-primary" />
+              <span className="text-lg font-semibold text-foreground">
+                {selectedTemplateIds.size}
+              </span>
+              <span className="text-muted-foreground">templates selecionados</span>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Tempo entre requisições</label>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <Input
+                  type="number"
+                  min={10}
+                  value={delayInput}
+                  onChange={(e) => setDelayInput(e.target.value)}
+                  onBlur={() => {
+                    const value = parseInt(delayInput, 10)
+                    if (!isNaN(value) && value >= 10) {
+                      setRequestDelay(value)
+                    } else {
+                      setDelayInput(requestDelay.toString())
+                    }
+                  }}
+                  className="h-10 w-24 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <span className="text-sm text-muted-foreground">segundos</span>
+              </div>
+              <p className="text-xs text-muted-foreground">O tempo mínimo é de 10 segundos para evitar bloqueios na API.</p>
+            </div>
+          </div>
+          
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                const value = parseInt(delayInput, 10)
+                if (!isNaN(value) && value >= 10) {
+                  setRequestDelay(value)
+                } else {
+                  setRequestDelay(10)
+                  setDelayInput("10")
+                }
+                setIsDialogOpen(false)
+                onImport(false)
+              }}
+              className="btn-tech gap-2 border-0"
+            >
+              <Import className="h-4 w-4" />
+              Confirmar Importação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

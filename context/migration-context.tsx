@@ -14,6 +14,7 @@ interface MigrationContextType {
   migrationStatus: MigrationStatus
   currentStep: Step
   processingIndex: number
+  requestDelay: number
 
   setAuth: (token: string, email: string) => void
   logout: () => void
@@ -27,6 +28,7 @@ interface MigrationContextType {
   setMigrationStatus: (status: MigrationStatus) => void
   addMigrationResult: (result: MigrationResult) => void
   setProcessingIndex: (index: number) => void
+  setRequestDelay: (delay: number) => void
   resetMigration: () => void
 }
 
@@ -43,6 +45,7 @@ export function MigrationProvider({ children }: { children: ReactNode }) {
   const [migrationStatus, setMigrationStatus] = useState<MigrationStatus>("idle")
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [processingIndex, setProcessingIndex] = useState(-1)
+  const [requestDelay, setRequestDelay] = useState(10)
 
   const setAuth = useCallback((t: string, e: string) => {
     setToken(t)
@@ -92,6 +95,7 @@ export function MigrationProvider({ children }: { children: ReactNode }) {
     setProcessingIndex(-1)
     setSelectedTemplateIds(new Set())
     setCurrentStep(1)
+    setRequestDelay(10)
   }, [])
 
   return (
@@ -107,6 +111,7 @@ export function MigrationProvider({ children }: { children: ReactNode }) {
         migrationStatus,
         currentStep,
         processingIndex,
+        requestDelay,
         setAuth,
         logout,
         setSourceAppId,
@@ -119,6 +124,7 @@ export function MigrationProvider({ children }: { children: ReactNode }) {
         setMigrationStatus,
         addMigrationResult,
         setProcessingIndex,
+        setRequestDelay,
         resetMigration,
       }}
     >
